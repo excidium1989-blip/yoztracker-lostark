@@ -1,0 +1,15 @@
+import { Check, ChevronDown, ChevronUp, Coins, Flag } from 'lucide-react'
+import { formatGold, goldProgress, topRaids } from '../lib/raids'
+import type { Character } from '../lib/raids'
+
+export function ClassIcon({ name }: { name: string }) {
+  return <div className="class-icon"><img src={`/icons/${name.toLowerCase()}.svg`} alt={`${name} Klassen-Icon`} onError={event => { event.currentTarget.style.display = 'none' }}/></div>
+}
+
+export function CharacterCard({ character, onEdit, onToggle, onGold, onMoveUp, onMoveDown, canMoveUp, canMoveDown }: { character: Character; onEdit: () => void; onToggle: (raid: string) => void; onGold: (raid: string) => void; onMoveUp: () => void; onMoveDown: () => void; canMoveUp: boolean; canMoveDown: boolean }) {
+  const raids = topRaids(character.itemLevel), progress = goldProgress([character])
+  return <article className="character-card"><div className="character-heading"><ClassIcon name={character.className}/><div className="character-title"><button onClick={onEdit} title="Charakter bearbeiten">{character.name}</button><span>{character.className} <span className="tiny-dot">·</span> <b>{character.itemLevel.toFixed(2)}</b></span></div><span className="character-gold"><Coins size={13}/>{character.gold.length}/3 GOLD</span><div className="character-reorder" role="group" aria-label={`${character.name} anordnen`}><button type="button" disabled={!canMoveUp} aria-label={`${character.name} nach oben verschieben`} title="Nach oben verschieben" onClick={onMoveUp}><ChevronUp size={14}/></button><button type="button" disabled={!canMoveDown} aria-label={`${character.name} nach unten verschieben`} title="Nach unten verschieben" onClick={onMoveDown}><ChevronDown size={14}/></button></div></div><div className="raid-list">{raids.length === 0 && <p className="subtle empty-raids">Keine Raids verfügbar. Ab Item-Level 1620 geht es los.</p>}{raids.map(raid => {
+    const completed = character.completed.includes(raid.id), gold = character.gold.includes(raid.id)
+    return <div className={`raid-row ${completed ? 'completed' : ''}`} key={raid.id}><button className="raid-check" role="checkbox" aria-checked={completed} aria-label={`${raid.name} ${raid.mode} ${completed ? 'als offen' : 'als erledigt'} markieren`} onClick={() => onToggle(raid.id)}>{completed && <Check size={14}/>}</button><div className="raid-name">{raid.name}<span>iLvl {raid.level} · {formatGold(raid.gold)} G</span></div><span className={`mode ${raid.mode.toLowerCase().replace(' ', '-')}`}>{raid.mode}</span><button className={`gold-toggle ${gold ? 'selected' : ''}`} aria-pressed={gold} title={gold ? 'Gold-Raid abwählen' : 'Als Gold-Raid auswählen (max. 3)'} onClick={() => onGold(raid.id)}><Coins size={11}/> GOLD</button></div>
+  })}</div><div className="character-footer"><span>{progress.done === progress.total && progress.total > 0 ? <><Check size={12}/> Gold-Raids erledigt</> : <><Flag size={12}/> {progress.done} von {progress.total} Gold-Raids erledigt</>}</span><div className="mini-progress"><span style={{ width: `${progress.percentage}%` }}/></div></div></article>
+}
